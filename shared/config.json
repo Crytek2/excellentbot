@@ -1,0 +1,53 @@
+{
+  "632493210253656065": {
+    "prefix": "!",
+    "welcomeMessage": "Welcome to the server, {user}!",
+    "automod": true
+  },
+  "1063176115046330368": {
+    "welcome": {
+      "enabled": true,
+      "channel": "1471463158291107911",
+      "title": "👋 Új tag érkezett a Serverre!",
+      "message": "Üdvözöllek a serveren, {user}!👋 Jó szórakozást kívánunk. Bármi kérdés van, tedd fel a vezetőségnek.:D\n",
+      "footer": "Excellent Bot",
+      "thumbnail": "",
+      "color": "#22c55e"
+    },
+    "autorole": {
+      "role": "1295780075404394590",
+      "enabled": true
+    },
+    "invite": {
+      "enabled": true
+    },
+    "xp": {
+      "enabled": true,
+      "amount": "5",
+      "channel": "1468041991496400919"
+    },
+    "level": {
+      "enabled": true,
+      "cooldown": 10,
+      "min": 5,
+      "max": 10,
+      "channel": "1295791565469646899",
+      "message": "🎉 {user} elérte a(z) {level} szintet!",
+      "roles": {}
+    },
+    "ticket": {
+      "enabled": true,
+      "categoryId": "1295791565469646899",
+      "supportRoleId": "1293611320075358248",
+      "logChannelId": "1295791565469646899",
+      "panelChannelId": "",
+      "maxPerUser": 1,
+      "panel": {
+        "title": "🎫 Support",
+        "description": "Kattints a gombra ticket nyitásához!",
+        "color": "#5865F2"
+      },
+      "deployRequested": true
+    }
+  }
+}

@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Excellent Bot</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="profile">
+  <img id="userAvatar" src="" alt="avatar">
+  <span id="username">Loading...</span>
+</div>
+
+<div class="sidebar">
+  <h2 class="logo">Excellent Bot</h2>
+
+  <div class="auth top-auth">
+    <a id="loginBtn" href="/login" style="display:none;" class="login">Login with Discord</a>
+    <a id="logoutBtn" href="/logout" style="display:none;" class="logout">Logout</a>
+  </div>
+</div>
+
+<div class="content">
+
+  <!-- GUILD HEADER -->
+  <div id="guildHeader" style="display:none;" class="guild-header">
+    <button onclick="backToGuilds()" class="back-btn">
+      ← Back to servers
+    </button>
+
+    <div class="guild-info">
+      <img id="selectedGuildIcon" class="guild-icon-large">
+      <h2 id="selectedGuildName"></h2>
+    </div>
+  </div>
+
+  <div class="dashboard-container">
+
+    <h1 id="welcomeText">Welcome 👋</h1>
+
+    <h2 class="section-title">Your Servers</h2>
+    <div class="guilds"></div>
+
+    <!-- SETTINGS PANEL (MODULE LIST) -->
+    <div id="settingsPanel" style="display:none;">
+
+      <h2 class="section-title">Modules</h2>
+
+      <div class="modules-grid">
+
+        <!-- WELCOME -->
+        <div class="module-card">
+          <div class="module-info">
+            <h3>👋 Welcome</h3>
+            <p>Send message when member joins</p>
+          </div>
+          <div class="module-actions">
+            <label class="switch">
+              <input type="checkbox" id="welcomeToggle">
+              <span class="slider"></span>
+            </label>
+            <button class="settings-btn"
+              onclick="openModuleConfig('welcome')">⚙</button>
+          </div>
+        </div>
+
+        <!-- AUTOROLE -->
+        <div class="module-card">
+          <div class="module-info">
+            <h3>🎭 AutoRole</h3>
+            <p>Give role automatically on join</p>
+          </div>
+          <div class="module-actions">
+            <label class="switch">
+              <input type="checkbox" id="autoRoleToggle">
+              <span class="slider"></span>
+            </label>
+            <button class="settings-btn"
+              onclick="openModuleConfig('autorole')">⚙</button>
+          </div>
+        </div>
+
+        <!-- MODERATION -->
+        <div class="module-card">
+          <div class="module-info">
+            <h3>🛡 Moderation</h3>
+            <p>Anti-Link protection</p>
+          </div>
+          <div class="module-actions">
+            <label class="switch">
+              <input type="checkbox" id="moderationToggle">
+              <span class="slider"></span>
+            </label>
+            <button class="settings-btn"
+              onclick="openModuleConfig('moderation')">⚙</button>
+          </div>
+        </div>
+
+        <!-- WARN -->
+        <div class="module-card">
+          <div class="module-info">
+            <h3>⚠️ Warn System</h3>
+            <p>Automatic punishments</p>
+          </div>
+          <div class="module-actions">
+            <label class="switch">
+              <input type="checkbox" id="warnSystemToggle">
+              <span class="slider"></span>
+            </label>
+            <button class="settings-btn"
+              onclick="openModuleConfig('warn')">⚙</button>
+          </div>
+        </div>
+
+        <!-- Level -->
+        <div class="module-card">
+          <div class="module-info">
+            <h3>📈 Level</h3>
+            <p>Activity leveling system</p>
+          </div>
+          <div class="module-actions">
+            <label class="switch">
+              <input type="checkbox" id="xpToggle">
+              <span class="slider"></span>
+            </label>
+            <button class="settings-btn"
+              onclick="openModuleConfig('level')">⚙</button>
+          </div>
+        </div>
+
+        <!-- INVITE -->
+        <div class="module-card">
+          <div class="module-info">
+            <h3>🔗 Invite Tracking</h3>
+            <p>Track member invites</p>
+          </div>
+          <div class="module-actions">
+            <label class="switch">
+              <input type="checkbox" id="inviteToggle">
+              <span class="slider"></span>
+            </label>
+            <button class="settings-btn"
+              onclick="openModuleConfig('invite')">⚙</button>
+          </div>
+        </div>
+
+        <!-- TICKET -->
+<div class="module-card">
+  <div class="module-info">
+    <h3>🎟 Ticket System</h3>
+    <p>Support ticket system</p>
+  </div>
+  <div class="module-actions">
+    <label class="switch">
+      <input type="checkbox" id="ticketToggle">
+      <span class="slider"></span>
+    </label>
+    <button class="settings-btn"
+      onclick="openModuleConfig('ticket')">⚙</button>
+  </div>
+</div>
+
+
+      </div>
+    </div>
+
+    <!-- MODULE CONFIG PAGE -->
+    <div id="moduleConfigPage" style="display:none;">
+
+      <button onclick="backToModules()" class="back-btn">
+        ← Back to Modules
+      </button>
+
+      <div class="panel">
+        <h2 id="configTitle">Module Settings</h2>
+        <div id="configContent"></div>
+
+        <div class="settings-actions">
+          <button onclick="saveModuleSettings()" class="save-btn">
+            Save Settings
+          </button>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+</div>
+
+<script>
+
+let selectedGuildId = null;
+let currentModule = null;
+
+/* ================= USER LOAD ================= */
+
+fetch("/api/user")
+.then(res => res.ok ? res.json() : Promise.reject())
+.then(user => {
+
+  document.getElementById("username").innerText = user.username;
+  document.getElementById("userAvatar").src =
+    `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png`;
+
+  document.getElementById("welcomeText").innerText =
+    "Welcome, " + user.username + " 👋";
+
+  document.getElementById("logoutBtn").style.display = "block";
+
+  return fetch("/api/guilds");
+})
+.then(res => res.json())
+.then(guilds => {
+
+  const container = document.querySelector(".guilds");
+  container.innerHTML = "";
+
+  guilds.forEach(g => {
+
+    const card = document.createElement("div");
+    card.className = "guild-card";
+
+    const iconUrl = g.icon
+      ? `https://cdn.discordapp.com/icons/${g.id}/${g.icon}.png`
+      : "https://cdn.discordapp.com/embed/avatars/0.png";
+
+    card.innerHTML = `
+      <img src="${iconUrl}" class="guild-icon">
+      <span>${g.name}</span>
+    `;
+
+    card.onclick = () => selectGuild(g);
+    container.appendChild(card);
+  });
+
+})
+.catch(() => {
+  document.getElementById("loginBtn").style.display = "block";
+});
+
+/* ================= TOGGLES ================= */
+
+const toggleMap = {
+  welcomeToggle: "welcome",
+  autoRoleToggle: "autorole",
+  moderationToggle: "moderation",
+  warnSystemToggle: "warn",
+  xpToggle: "level",
+  inviteToggle: "invite",
+  ticketToggle: "ticket"
+};
+
+Object.keys(toggleMap).forEach(id => {
+
+  const element = document.getElementById(id);
+  if (!element) return;
+
+  element.addEventListener("change", function () {
+
+    if (!selectedGuildId) return;
+
+    fetch(`/api/guilds/${selectedGuildId}/${toggleMap[id]}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        enabled: element.checked
+      })
+    });
+  });
+});
+
+/* ================= LOAD CONFIG ================= */
+
+function loadGuildConfig() {
+
+  if (!selectedGuildId) return;
+
+  fetch(`/api/guilds/${selectedGuildId}/config`)
+  .then(res => res.json())
+  .then(config => {
+
+    Object.keys(toggleMap).forEach(id => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      const moduleName = toggleMap[id];
+      el.checked = !!config[moduleName]?.enabled;
+    });
+
+  });
+}
+
+/* ================= SELECT GUILD ================= */
+
+function selectGuild(guild) {
+
+  selectedGuildId = guild.id;
+
+  document.getElementById("selectedGuildName").innerText = guild.name;
+  document.getElementById("selectedGuildIcon").src =
+    guild.icon
+      ? `https://cdn.discordapp.com/icons/${guild.id}/${guild.icon}.png`
+      : "https://cdn.discordapp.com/embed/avatars/0.png";
+
+  document.querySelector(".guilds").style.display = "none";
+  document.getElementById("guildHeader").style.display = "flex";
+  document.getElementById("settingsPanel").style.display = "block";
+
+  loadGuildConfig();
+}
+
+/* ================= BACK ================= */
+
+function backToGuilds() {
+  selectedGuildId = null;
+  document.querySelector(".guilds").style.display = "grid";
+  document.getElementById("guildHeader").style.display = "none";
+  document.getElementById("settingsPanel").style.display = "none";
+  document.getElementById("moduleConfigPage").style.display = "none";
+}
+
+function backToModules() {
+  document.getElementById("moduleConfigPage").style.display = "none";
+  document.getElementById("settingsPanel").style.display = "block";
+}
+
+/* ================= HELPERS ================= */
+
+function loadChannels(selectId) {
+  fetch(`/api/guilds/${selectedGuildId}/channels`)
+  .then(res => res.json())
+  .then(channels => {
+
+    const select = document.getElementById(selectId);
+    if (!select) return;
+
+    select.innerHTML = "";
+
+    channels
+      .filter(c => c.type === 0)
+      .forEach(channel => {
+
+        const option = document.createElement("option");
+        option.value = channel.id;
+        option.innerText = "#" + channel.name;
+
+        select.appendChild(option);
+      });
+  });
+}
+
+function loadRolesSelect(selectId) {
+  fetch(`/api/guilds/${selectedGuildId}/roles`)
+  .then(res => res.json())
+  .then(roles => {
+
+    const select = document.getElementById(selectId);
+    if (!select) return;
+
+    select.innerHTML = "";
+
+    roles
+      .filter(r => !r.managed)
+      .forEach(role => {
+
+        const option = document.createElement("option");
+        option.value = role.id;
+        option.innerText = role.name;
+
+        select.appendChild(option);
+      });
+  });
+}
+
+/* ================= MODULE CONFIG ================= */
+
+function openModuleConfig(module) {
+
+  currentModule = module;
+
+  document.getElementById("settingsPanel").style.display = "none";
+  document.getElementById("moduleConfigPage").style.display = "block";
+
+  const title = document.getElementById("configTitle");
+  const content = document.getElementById("configContent");
+
+  /* ===== LEVEL ===== */
+
+  if (module === "level") {
+
+    title.innerText = "Level Settings";
+
+    content.innerHTML = `
+      <label>Cooldown</label>
+      <input type="number" id="levelCooldown" value="60">
+
+      <label>XP Min</label>
+      <input type="number" id="levelMin" value="5">
+
+      <label>XP Max</label>
+      <input type="number" id="levelMax" value="15">
+
+      <label>Channel</label>
+      <select id="levelChannel"></select>
+
+      <label>Message</label>
+      <input type="text" id="levelMessage">
+    `;
+
+    loadChannels("levelChannel");
+
+    fetch(`/api/guilds/${selectedGuildId}/config`)
+    .then(res => res.json())
+    .then(config => {
+
+      if (!config.level) return;
+
+      document.getElementById("levelCooldown").value = config.level.cooldown || 60;
+      document.getElementById("levelMin").value = config.level.min || 5;
+      document.getElementById("levelMax").value = config.level.max || 15;
+      document.getElementById("levelMessage").value = config.level.message || "";
+
+      setTimeout(() => {
+        document.getElementById("levelChannel").value = config.level.channel || "";
+      }, 200);
+    });
+  }
+
+  /* ===== TICKET ===== */
+
+  if (module === "ticket") {
+
+    title.innerText = "Ticket Settings";
+
+    content.innerHTML = `
+      <label>Category</label>
+      <select id="ticketCategory"></select>
+
+      <label>Support Role</label>
+      <select id="ticketSupportRole"></select>
+
+      <label>Log Channel</label>
+      <select id="ticketLogChannel"></select>
+
+      <label>Max Per User</label>
+      <input type="number" id="ticketMax" value="1">
+
+      <hr>
+
+      <button onclick="deployTicketPanel()" class="save-btn">
+        🚀 Deploy Ticket Panel
+      </button>
+    `;
+
+    loadChannels("ticketCategory");
+    loadChannels("ticketLogChannel");
+    loadRolesSelect("ticketSupportRole");
+  }
+}
+
+/* ================= SAVE ================= */
+
+function saveModuleSettings() {
+
+  if (!selectedGuildId || !currentModule) return;
+
+  let data = {};
+
+  if (currentModule === "level") {
+    data = {
+      cooldown: Number(document.getElementById("levelCooldown").value),
+      min: Number(document.getElementById("levelMin").value),
+      max: Number(document.getElementById("levelMax").value),
+      channel: document.getElementById("levelChannel").value,
+      message: document.getElementById("levelMessage").value
+    };
+  }
+
+  if (currentModule === "ticket") {
+    data = {
+      enabeled: true,
+      categoryId: document.getElementById("ticketCategory").value,
+      supportRoleId: document.getElementById("ticketSupportRole").value,
+      logChannelId: document.getElementById("ticketLogChannel").value,
+      maxPerUser: Number(document.getElementById("ticketMax").value)
+    };
+  }
+
+  fetch(`/api/guilds/${selectedGuildId}/${currentModule}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data)
+  })
+  .then(() => {
+    alert("Settings saved ✅");
+    backToModules();
+  });
+}
+
+/* ================= DEPLOY ================= */
+
+function deployTicketPanel() {
+
+  if (!selectedGuildId) return;
+
+  fetch(`/api/guilds/${selectedGuildId}/ticket/deploy`, {
+    method: "POST"
+  })
+  .then(res => res.json())
+  .then(data => {
+
+    if (data.error) {
+      alert("❌ " + data.error);
+      return;
+    }
+
+    alert("✅ Ticket panel deployed!");
+  });
+}
+
+</script>
+
+
+
+
+</body>
+</html>

@@ -1,0 +1,53 @@
+{
+  "1063176115046330368": {
+    "1136689273442140180": [
+      {
+        "moderator": "crytek1425",
+        "reason": null,
+        "date": "2026-02-16T22:20:52.982Z"
+      },
+      {
+        "moderator": "crytek1425",
+        "reason": "teszt",
+        "date": "2026-02-16T22:21:11.220Z"
+      },
+      {
+        "moderator": "crytek1425",
+        "reason": "teszt",
+        "date": "2026-02-16T22:43:59.072Z"
+      },
+      {
+        "caseId": "W-1771584945676",
+        "moderatorId": "249523854861402113",
+        "moderatorTag": "crytek1425",
+        "reason": "teszt",
+        "date": 1771584945676,
+        "expiresAt": 1774176945676
+      },
+      {
+        "caseId": "W-1771585054487",
+        "moderatorId": "249523854861402113",
+        "moderatorTag": "crytek1425",
+        "reason": "teszt",
+        "date": 1771585054487,
+        "expiresAt": 1774177054487
+      },
+      {
+        "caseId": "W-1771585082983",
+        "moderatorId": "249523854861402113",
+        "moderatorTag": "crytek1425",
+        "reason": "tesz",
+        "date": 1771585082983,
+        "expiresAt": 1774177082983
+      },
+      {
+        "caseId": "W-1771585134826",
+        "moderatorId": "249523854861402113",
+        "moderatorTag": "crytek1425",
+        "reason": "teszt",
+        "date": 1771585134826,
+        "expiresAt": 1774177134826
+      }
+    ]
+  }
+}

@@ -1,0 +1,63 @@
+<h2>🎭 Auto Role</h2>
+
+<label>
+  <input type="checkbox" id="autoRoleEnabled" />
+  Auto Role engedélyezése
+</label>
+
+<br /><br />
+
+<label>Role kiválasztása:</label><br />
+<select id="autoRoleSelect">
+  <option value="">– nincs –</option>
+</select>
+
+<br /><br />
+<button onclick="saveAutoRole()">Mentés</button>
+
+<script>
+let currentGuildId = localStorage.getItem("guildId");
+
+async function loadAutoRole() {
+  const roles = await fetch(`/api/guilds/${currentGuildId}/roles`)
+    .then(r => r.json());
+
+  const select = document.getElementById("autoRoleSelect");
+  select.innerHTML = `<option value="">– nincs –</option>`;
+
+  roles.forEach(role => {
+    const opt = document.createElement("option");
+    opt.value = role.id;
+    opt.textContent = role.name;
+    select.appendChild(opt);
+  });
+
+  const settings = await fetch(
+    `/api/guilds/${currentGuildId}/settings`
+  ).then(r => r.json());
+
+  document.getElementById("autoRoleEnabled").checked =
+    settings.autoRoleEnabled === true;
+
+  if (settings.autoRoleId) {
+    select.value = settings.autoRoleId;
+  }
+}
+
+async function saveAutoRole() {
+  await fetch(`/api/guilds/${currentGuildId}/settings`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      autoRoleEnabled:
+        document.getElementById("autoRoleEnabled").checked,
+      autoRoleId:
+        document.getElementById("autoRoleSelect").value,
+    }),
+  });
+
+  alert("✅ Auto Role elmentve!");
+}
+
+loadAutoRole();
+</script>

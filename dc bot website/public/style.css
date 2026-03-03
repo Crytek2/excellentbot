@@ -1,0 +1,411 @@
+body {
+  margin: 0;
+  font-family: "Segoe UI", sans-serif;
+  /* Mély sötétkékből induló, alul világosodó gradiens */
+  background: linear-gradient(180deg, #0b1426 0%, #162a4d 50%, #5b86e5 100%);
+  background-attachment: fixed;
+  color: #f1f5f9;
+  min-height: 100vh;
+}
+
+
+/* ===== GLOBAL GLASS - SÖTÉTÍTETT ÉS KONTRASTOS ===== */
+
+.card,
+.guild-card,
+.panel,
+.sidebar,
+.module-card,
+.stat-card {
+  /* Nagyon sötét, 70%-ban áttetsző alap */
+  background: rgba(10, 20, 38, 0.7) !important; 
+  backdrop-filter: blur(12px); /* Lágy elmosás a háttéren */
+  border-radius: 12px;
+  /* Finomabb szegély */
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+}
+
+/* ===== PROFILE TOP RIGHT ===== */
+
+.profile {
+  position: fixed;
+  top: 20px;
+  right: 30px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  z-index: 100;
+}
+
+.profile img {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 2px solid #3b82f6;
+}
+
+/* ===== SIDEBAR - SÖTÉT ÉS ÉLES ===== */
+
+.sidebar {
+  position: fixed;
+  width: 240px;
+  height: 100vh;
+  padding: 30px 20px;
+  display: flex;
+  flex-direction: column;
+  /* Kicsit sötétebb és tömörebb kék */
+  background: rgba(13, 27, 54, 0.9); 
+  border-right: 1px solid rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(20px);
+}
+
+
+.logo {
+  font-size: 24px;
+  color: #60a5fa; /* Excellent Bot világoskék */
+  margin-bottom: 35px;
+  font-weight: bold;
+}
+
+.menu {
+  list-style: none;
+  padding: 0;
+}
+
+.menu li {
+  padding: 12px 15px;
+  border-radius: 10px;
+  margin-bottom: 8px;
+  cursor: pointer;
+  color: #94a3b8;
+  opacity: 0.8;
+  transition: 0.25s ease;
+}
+
+.menu li:hover,
+.menu li.active {
+  /* Aktív menüpont kék fényhatása */
+  background: linear-gradient(90deg, rgba(37, 99, 235, 0.35), transparent);
+  color: #ffffff;
+  opacity: 1;
+}
+
+/* AUTH */
+
+.auth a {
+  display: block;
+  text-align: center;
+  padding: 10px;
+  border-radius: 10px;
+  text-decoration: none;
+  font-weight: bold;
+  margin-bottom: 10px;
+}
+
+.login { background: #10b981; color: white; }
+.logout { background: #dc2626; color: white; } /* Az első képen látható piros */
+
+/* ===== CONTENT ===== */
+
+.content {
+  margin-left: 300px;
+  padding: 40px;
+}
+
+.dashboard-container {
+  padding: 30px;
+}
+
+/* ===== GUILDS ===== */
+
+.guilds {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  gap: 20px;
+}
+
+.guild-card {
+  padding: 20px;
+  text-align: center;
+  transition: 0.25s ease;
+  cursor: pointer;
+}
+
+.guild-card:hover {
+  transform: translateY(-6px);
+  border-color: #3b82f6;
+  box-shadow: 0 20px 40px rgba(59, 130, 246, 0.25);
+}
+
+.guild-icon {
+  width: 50px;
+  height: 50px;
+  border-radius: 12px;
+  margin-bottom: 10px;
+}
+
+/* ===== STATS ===== */
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 20px;
+  margin: 30px 0 50px;
+}
+
+.stat-card {
+  padding: 25px;
+  text-align: center;
+  transition: 0.2s ease;
+}
+
+.stat-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 15px 30px rgba(59, 130, 246, 0.15);
+}
+
+.stat-card h4 {
+  font-size: 13px;
+  opacity: 0.6;
+  margin-bottom: 10px;
+}
+
+.stat-card p {
+  font-size: 26px;
+  font-weight: bold;
+}
+
+/* ===== MODULES - MAJDNEM FEKETE KÁRTYÁK A MAX KONTRASTHOZ ===== */
+
+.modules-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 25px;
+  margin-top: 20px;
+}
+
+.module-card {
+  padding: 22px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: 0.25s ease;
+  position: relative;
+  /* Sötétebb, mélyfekete kék belső rész */
+  background: rgba(2, 6, 12, 0.6) !important;
+  border: 1px solid rgba(255, 255, 255, 0.03);
+  box-shadow: 
+    0 10px 25px rgba(0,0,0,0.5),
+    inset 0 1px 0 rgba(255,255,255,0.02);
+}
+
+.module-card:hover {
+  transform: translateY(-6px);
+  border-color: #3b82f6;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.6);
+}
+
+
+.module-card.enabled {
+  box-shadow: 0 0 25px rgba(59, 130, 246, 0.25);
+  border-left: 4px solid #2563eb;
+}
+
+.module-info h3 {
+  margin: 0;
+  font-size: 17px;
+}
+
+.module-info p {
+  font-size: 13px;
+  opacity: 0.6;
+  margin-top: 4px;
+}
+
+.module-actions {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+/* ===== MODERN TOGGLE - KÉK AKTÍV ÁLLAPOT ===== */
+
+.switch {
+  position: relative;
+  width: 48px;
+  height: 24px;
+}
+
+.switch input {
+  display: none;
+}
+
+.slider {
+  position: absolute;
+  inset: 0;
+  background: #1e293b;
+  border-radius: 50px;
+  transition: .3s;
+  cursor: pointer;
+}
+
+.slider:before {
+  content: "";
+  position: absolute;
+  height: 18px;
+  width: 18px;
+  left: 3px;
+  bottom: 3px;
+  background: white;
+  border-radius: 50%;
+  transition: .3s;
+}
+
+.switch input:checked + .slider {
+  background: #2563eb; /* Az első képen kékes kapcsolók vannak */
+}
+
+.switch input:checked + .slider:before {
+  transform: translateX(24px);
+}
+
+/* ===== PANELS ===== */
+
+.panel {
+  padding: 22px;
+  margin-bottom: 20px;
+}
+
+input,
+textarea,
+select {
+  width: 100%;
+  padding: 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(59, 130, 246, 0.2);
+  background: #0f172a;
+  color: white;
+  margin-top: 10px;
+}
+
+textarea {
+  min-height: 120px;
+  resize: vertical;
+}
+
+/* ===== BUTTONS ===== */
+
+.settings-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 15px;
+  margin-top: 30px;
+}
+
+.save-btn,
+.back-btn {
+  padding: 12px 22px;
+  border-radius: 12px;
+  border: none;
+  font-weight: bold;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.save-btn {
+  background: #2563eb;
+  color: white;
+}
+
+.save-btn:hover {
+  background: #1d4ed8;
+  transform: translateY(-2px);
+  box-shadow: 0 0 20px rgba(37, 99, 235, 0.4);
+}
+
+.back-btn {
+  background: #334155;
+  color: white;
+}
+
+.back-btn:hover {
+  background: #475569;
+}
+
+/* ===== GUILD HEADER FIX ===== */
+
+.guild-header {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  margin-bottom: 30px;
+}
+
+.guild-info {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.guild-icon-large {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  object-fit: cover;
+}
+
+/* ===== SETTINGS BUTTON ===== */
+
+.settings-btn {
+  background: #3b82f6;
+  border: none;
+  color: white;
+  padding: 6px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.settings-btn:hover {
+  background: #2563eb;
+}
+
+/* ===== SLIDE PANEL ===== */
+
+.module-settings-panel {
+  position: fixed;
+  top: 0;
+  right: -400px;
+  width: 380px;
+  height: 100vh;
+  /* Sötétebb üvegpanel kék szegéllyel */
+  background: rgba(2, 6, 23, 0.98);
+  backdrop-filter: blur(14px);
+  box-shadow: -10px 0 30px rgba(0,0,0,0.6);
+  border-left: 1px solid rgba(59, 130, 246, 0.3);
+  padding: 25px;
+  transition: right 0.3s ease;
+  z-index: 999;
+  overflow-y: auto;
+}
+
+.module-settings-panel.active {
+  right: 0;
+}
+
+.settings-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 25px;
+}
+
+.close-settings {
+  background: #dc2626;
+  border: none;
+  color: white;
+  padding: 6px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+}
