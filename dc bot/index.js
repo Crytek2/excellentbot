@@ -11,8 +11,6 @@ const ticketManager = require("./shared/ticketManager");
 
 const inviteCache = new Map();
 
-
-
 /* ===============================
    DISCORD CLIENT
 ================================ */
@@ -52,6 +50,22 @@ client.getGuildConfig = (guildId) => {
 };
 
 /* ===============================
+   DASHBOARD MODULES ⭐ NEW
+================================ */
+
+const MODULES_PATH = path.join(__dirname, "../shared/modules.json");
+
+function readModules() {
+  if (!fs.existsSync(MODULES_PATH)) return {};
+  return JSON.parse(fs.readFileSync(MODULES_PATH, "utf8"));
+}
+
+client.getModules = (guildId) => {
+  const modules = readModules();
+  return modules[guildId] || {};
+};
+
+/* ===============================
    COMMANDS LOAD
 ================================ */
 const commandFiles = fs
@@ -87,7 +101,6 @@ for (const file of eventFiles) {
    READY
 ================================ */
 
-
 client.invites = new Map();
 
 client.guilds.cache.forEach(async guild => {
@@ -102,7 +115,6 @@ client.guilds.cache.forEach(async guild => {
     new Map(invites.map(inv => [inv.code, inv.uses]))
   );
 });
-
 
 /* ===============================
    LOGS MODULE
@@ -121,10 +133,7 @@ client.guilds.cache.forEach(async guild => {
 ================================ */
 client.login(process.env.TOKEN);
 
-
 const config_path = path.join(__dirname, "../shared/config.json");
-
-
 
 /* ===============================
    WELCOME EVENT  ⭐⭐⭐
@@ -138,38 +147,39 @@ process.on("uncaughtException", (error) => {
   console.error("Uncaught exception:", error);
 });
 
+client.once("ready", () => {
 
-setInterval(async () => {
+  console.log("Bot ready");
 
-  const guilds = client.guilds.cache;  // ✅ EZ HIÁNYZIK NÁLAD
+  ticketManager.init(client);
 
-  for (const [guildId] of guilds) {
+  setInterval(async () => {
 
-    const config = configManager.getGuildConfig(guildId);
+    const guilds = client.guilds.cache;
 
-    if (config.ticket?.deployRequested) {
+    for (const [guildId] of guilds) {
 
-      console.log("Deploying ticket panel for:", guildId);
+      const config = configManager.getGuildConfig(guildId);
 
-      try {
-        await ticketManager.deployPanel(guildId);
+      if (config.ticket?.deployRequested) {
 
-        configManager.saveModule(guildId, "ticket", {
-          deployRequested: false
-        });
+        console.log("Deploying ticket panel for:", guildId);
 
-      } catch (err) {
-        console.error("Deploy error:", err.message);
+        try {
+
+          await ticketManager.deployPanel(guildId);
+
+          configManager.saveModule(guildId, "ticket", {
+            deployRequested: false
+          });
+
+        } catch (err) {
+          console.error("Deploy error:", err.message);
+        }
+
       }
     }
-  }
 
-}, 5000);
+  }, 5000);
 
-
-
-
-client.once("ready", () => {
-  console.log("Bot ready");
-  ticketManager.init(client);
 });
