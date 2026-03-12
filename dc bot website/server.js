@@ -1,405 +1,618 @@
-require("dotenv").config();
-const express = require("express");
-const session = require("express-session");
-const OAuth2 = require("discord-oauth2");
-const fs = require("fs");
-const bodyParser = require("body-parser");
-const fetch = require("node-fetch");
-const path = require("path");
-const configManager = require("../shared/configManager");
+const express = require("express")
+const path = require("path")
+const session = require("express-session")
+const fetch = require("node-fetch")
+const fs = require("fs")
+require("dotenv").config()
+
+const app = express()
+
+const CLIENT_ID = process.env.CLIENT_ID
+const CLIENT_SECRET = process.env.CLIENT_SECRET
+const REDIRECT_URI = process.env.REDIRECT_URI
+const BOT_TOKEN = process.env.BOT_TOKEN
 
 
+/* MODULE FILE */
 
+const modulesFile = path.join(__dirname, "..", "shared", "modules.json")
 
-const app = express();
-const oauth = new OAuth2();
+function loadModules(){
 
-/* ===============================
-   PATHS
-================================ */
-const WARN_PATH = path.join(__dirname, "../shared/warnings.json");
-const XP_PATH = path.join(__dirname, "../shared/xpData.json");
-const CONFIG_PATH = path.join(__dirname, "../shared/config.json");
-const ticketManager = require("../dc bot/shared/ticketManager");
-
-console.log("ticketManager:", ticketManager);
-
-
-/* ===============================
-   FILE HELPERS
-================================ */
-function readJSON(filePath) {
-  if (!fs.existsSync(filePath)) {
-    fs.writeFileSync(filePath, JSON.stringify({}, null, 2));
-  }
-  try {
-    return JSON.parse(fs.readFileSync(filePath, "utf8"));
-  } catch {
-    return {};
-  }
+if(!fs.existsSync(modulesFile)){
+fs.writeFileSync(modulesFile,"{}")
+return {}
 }
 
-function writeJSON(filePath, data) {
-  fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
+try{
+return JSON.parse(fs.readFileSync(modulesFile))
+}catch{
+return {}
 }
 
-/* ===============================
-   MIDDLEWARE
-================================ */
-app.use(express.static(path.join(__dirname, "public")));
-app.use(bodyParser.json());
-
-app.use(
-  session({
-    secret: process.env.SESSION_SECRET || "dashboard_secret",
-    resave: false,
-    saveUninitialized: false,
-  })
-);
-
-/* ===============================
-   LOGIN
-================================ */
-app.get("/login", (req, res) => {
-  res.redirect(
-    `https://discord.com/api/oauth2/authorize?client_id=${process.env.CLIENT_ID}&redirect_uri=${encodeURIComponent(
-      process.env.REDIRECT_URI
-    )}&response_type=code&scope=identify%20guilds`
-  );
-});
-
-app.get("/callback", async (req, res) => {
-  try {
-    const code = req.query.code;
-
-    const token = await oauth.tokenRequest({
-      clientId: process.env.CLIENT_ID,
-      clientSecret: process.env.CLIENT_SECRET,
-      code,
-      scope: "identify guilds",
-      grantType: "authorization_code",
-      redirectUri: process.env.REDIRECT_URI,
-    });
-
-    const user = await oauth.getUser(token.access_token);
-
-    req.session.user = user;
-    req.session.token = token.access_token;
-
-    res.redirect("/");
-  } catch (err) {
-    console.error("OAuth error:", err);
-    res.send("OAuth error");
-  }
-});
-
-/* ===============================
-   USER
-================================ */
-app.get("/api/user", (req, res) => {
-  if (!req.session.user) {
-    return res.status(401).json({ error: "Not logged in" });
-  }
-  res.json(req.session.user);
-});
-
-app.get("/logout", (req, res) => {
-  req.session.destroy(() => res.redirect("/"));
-});
-
-/* ===============================
-   PERMISSION SYSTEM
-================================ */
-
-async function resolveGuildMember(req, res, next) {
-
-  if (!req.session.user || !req.session.token) {
-    return res.status(401).json({ error: "Not logged in" });
-  }
-
-  const guildId = req.params.guildId;
-
-  try {
-
-    const response = await fetch(
-      "https://discord.com/api/users/@me/guilds",
-      {
-        headers: {
-          Authorization: `Bearer ${req.session.token}`
-        }
-      }
-    );
-
-    const guilds = await response.json();
-
-    if (!Array.isArray(guilds)) {
-      return res.status(500).json({ error: "Failed to fetch guilds" });
-    }
-
-    const guild = guilds.find(g => g.id === guildId);
-
-    if (!guild) {
-      return res.status(403).json({ error: "Not in this guild" });
-    }
-
-    const isOwner = guild.owner === true;
-
-    req.guildMember = {
-      guildId,
-      isOwner
-    };
-
-    next();
-
-  } catch (err) {
-    console.error("Permission error:", err);
-    res.status(500).json({ error: "Permission check failed" });
-  }
 }
 
-function requireOwner(req, res, next) {
+function saveModules(data){
 
-  if (!req.guildMember) {
-    return res.status(500).json({ error: "Guild data missing" });
-  }
+fs.writeFileSync(modulesFile, JSON.stringify(data,null,2))
 
-  if (!req.guildMember.isOwner) {
-    return res.status(403).json({
-      error: "Only the server owner can manage this bot"
-    });
-  }
-
-  next();
 }
 
 
-/* ===============================
-   GUILDS
-================================ */
-app.get("/api/guilds", async (req, res) => {
-  if (!req.session.token) {
-    return res.status(401).json({ error: "Not logged in" });
-  }
+/* SESSION */
 
-  const guilds = await fetch("https://discord.com/api/users/@me/guilds", {
-    headers: { Authorization: `Bearer ${req.session.token}` },
-  }).then(r => r.json());
-
-  const adminGuilds = guilds.filter(g => (g.permissions & 0x8) === 0x8);
-  res.json(adminGuilds);
-});
-
-/* ===============================
-   CHANNELS
-================================ */
-app.get("/api/guilds/:guildId/channels", async (req, res) => {
-  const response = await fetch(
-    `https://discord.com/api/v10/guilds/${req.params.guildId}/channels`,
-    {
-      headers: {
-        Authorization: `Bot ${process.env.BOT_TOKEN}`,
-      },
-    }
-  );
-
-  const data = await response.json();
-
-  if (!Array.isArray(data)) return res.json([]);
-
-  const textChannels = data.filter(c => c.type === 0);
-  res.json(textChannels);
-});
-
-/* ===============================
-   ROLES
-================================ */
-app.get("/api/guilds/:guildId/roles", async (req, res) => {
-  try {
-    const response = await fetch(
-      `https://discord.com/api/v10/guilds/${req.params.guildId}/roles`,
-      {
-        headers: {
-          Authorization: `Bot ${process.env.BOT_TOKEN}`,
-        },
-      }
-    );
-
-    const roles = await response.json();
-    if (!Array.isArray(roles)) return res.json([]);
-
-    const filtered = roles.filter(r => r.name !== "@everyone");
-    res.json(filtered);
-  } catch {
-    res.json([]);
-  }
-});
-
-/* ===============================
-   CONFIG LOAD
-================================ */
-app.get(
-  "/api/guilds/:guildId/config",
-  resolveGuildMember,
-  requireOwner,
-  (req, res) => {
-
-  const data = configManager.getGuildConfig(req.params.guildId);
-res.json(data);
-
-});
-
-/* ===============================
-   MODULE SAVE
-================================ */
-app.post(
-  "/api/guilds/:guildId/:module",
-  resolveGuildMember,
-  requireOwner,
-  (req, res) => {
-  if (!req.session.user) {
-    return res.status(401).json({ error: "Not logged in" });
-  }
-
-  configManager.saveModule(
-  req.params.guildId,
-  req.params.module,
-  req.body
-);
-
-res.json({ success: true });
-
-});
-/* ===============================
-   TICKET DEPLOY
-================================ */
-
-app.post(
-  "/api/guilds/:guildId/ticket/deploy",
-  resolveGuildMember,
-  requireOwner,
-  (req, res) => {
-
-    const guildId = req.params.guildId;
-
-    const config = configManager.getGuildConfig(guildId);
-
-    if (!config.ticket || config.ticket.enabled !== true) {
-      return res.status(400).json({
-        error: "Ticket system is disabled"
-      });
-    }
-
-    configManager.saveModule(guildId, "ticket", {
-      deployRequested: true
-    });
-
-    return res.json({ success: true });
-});
+app.use(session({
+secret: process.env.SESSION_SECRET,
+resave: false,
+saveUninitialized: false
+}))
 
 
+/* BODY PARSER */
 
-/* ===============================
-   WARNINGS API
-================================ */
-app.get("/api/guilds/:guildId/warnings", (req, res) => {
-  const warns = readJSON(WARN_PATH);
-  const guildWarns = warns[req.params.guildId] || {};
-
-  const formatted = Object.entries(guildWarns).map(([userId, warnings]) => ({
-    userId,
-    count: warnings.length
-  }));
-
-  res.json(formatted);
-});
-
-app.get("/api/guilds/:guildId/warnings/:userId", (req, res) => {
-  const warns = readJSON(WARN_PATH);
-  const guildWarns = warns[req.params.guildId] || {};
-  const userWarns = guildWarns[req.params.userId] || [];
-  res.json(userWarns);
-});
-
-app.delete("/api/guilds/:guildId/clearwarns/:userId", (req, res) => {
-  if (!req.session.user) {
-    return res.status(401).json({ error: "Not logged in" });
-  }
-
-  const warns = readJSON(WARN_PATH);
-
-  if (
-    warns[req.params.guildId] &&
-    warns[req.params.guildId][req.params.userId]
-  ) {
-    delete warns[req.params.guildId][req.params.userId];
-    writeJSON(WARN_PATH, warns);
-  }
-
-  res.json({ success: true });
-});
-
-/* ===============================
-   XP API
-================================ */
-app.get("/api/guilds/:guildId/xp", (req, res) => {
-  const xpData = readJSON(XP_PATH);
-  const guildXP = xpData[req.params.guildId] || {};
-
-  const leaderboard = Object.entries(guildXP)
-    .sort((a, b) => b[1].xp - a[1].xp)
-    .slice(0, 10)
-    .map(([userId, data]) => ({
-      userId,
-      xp: data.xp,
-      level: data.level
-    }));
-
-  res.json(leaderboard);
-});
-
-app.get("/api/guilds/:guildId/xp/:userId", (req, res) => {
-  const xpData = readJSON(XP_PATH);
-  const guildXP = xpData[req.params.guildId] || {};
-  const user = guildXP[req.params.userId] || { xp: 0, level: 0 };
-  res.json(user);
-});
-
-/*
-  Ticket
-*/
+app.use(express.json())
 
 
-app.post(
-  "/api/guilds/:guildId/ticket/deploy",
-  resolveGuildMember,
-  requireOwner,
-  (req, res) => {
+/* STATIC FILES */
 
-    const guildId = req.params.guildId;
-
-    const config = configManager.getGuildConfig(guildId);
-
-    if (!config.ticket || config.ticket.enabled !== true) {
-      return res.status(400).json({
-        error: "Ticket system is disabled"
-      });
-    }
-
-    configManager.saveModule(guildId, "ticket", {
-      deployRequested: true
-    });
-
-    return res.json({ success: true });
-});
+app.use(express.static("public"))
+app.use("/css", express.static(path.join(__dirname,"css")))
 
 
+/* LOGIN */
 
-/* ===============================
-   START
-================================ */
+app.get("/login",(req,res)=>{
+
+const url =
+`https://discord.com/api/oauth2/authorize?client_id=${CLIENT_ID}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&response_type=code&scope=identify%20guilds`
+
+res.redirect(url)
+
+})
+
+
+/* CALLBACK */
+
+app.get("/callback", async (req,res)=>{
+
+const code = req.query.code
+
+if(!code) return res.send("No code provided")
+
+try{
+
+const data = new URLSearchParams()
+
+data.append("client_id",CLIENT_ID)
+data.append("client_secret",CLIENT_SECRET)
+data.append("grant_type","authorization_code")
+data.append("code",code)
+data.append("redirect_uri",REDIRECT_URI)
+
+const response = await fetch("https://discord.com/api/oauth2/token",{
+method:"POST",
+body:data,
+headers:{
+"Content-Type":"application/x-www-form-urlencoded"
+}
+})
+
+const json = await response.json()
+
+if(!json.access_token) return res.send("Login failed")
+
+req.session.token = json.access_token
+
+res.redirect("/servers")
+
+}catch(err){
+
+console.error(err)
+res.send("OAuth error")
+
+}
+
+})
+
+
+/* SERVERS PAGE */
+
+app.get("/servers",(req,res)=>{
+res.sendFile(path.join(__dirname,"public/servers.html"))
+})
+
+
+/* API SERVERS */
+
+app.get("/api/servers", async (req,res)=>{
+
+if(!req.session.token) return res.json([])
+
+try{
+
+const response = await fetch("https://discord.com/api/users/@me/guilds",{
+headers:{
+Authorization:`Bearer ${req.session.token}`
+}
+})
+
+const guilds = await response.json()
+
+if(!Array.isArray(guilds)){
+
+console.error("Discord API error:", guilds)
+return res.json([])
+
+}
+
+// MANAGE SERVER permission
+const filtered = guilds.filter(guild => {
+
+const perms = BigInt(guild.permissions)
+
+return (perms & 0x20n) === 0x20n
+
+})
+
+res.json(filtered)
+
+}catch(err){
+
+console.error(err)
+res.json([])
+
+}
+
+})
+
+
+/* SINGLE SERVER INFO */
+
+app.get("/api/server/:id", async (req,res)=>{
+
+if(!req.session.token) return res.json(null)
+
+try{
+
+const response = await fetch("https://discord.com/api/users/@me/guilds",{
+headers:{
+Authorization:`Bearer ${req.session.token}`
+}
+})
+
+const guilds = await response.json()
+
+if(guilds.retry_after){
+
+console.log("Discord rate limited")
+
+setTimeout(()=>{
+
+res.json(null)
+
+}, guilds.retry_after * 1000)
+
+return
+
+}
+
+if(!Array.isArray(guilds)){
+
+console.error("Discord API error:", guilds)
+return res.json(null)
+
+}
+
+const guild = guilds.find(g => g.id === req.params.id)
+
+res.json(guild)
+
+}catch(err){
+
+console.error(err)
+res.json(null)
+
+}
+
+})
+
+
+/* BOT STATUS */
+
+app.get("/api/bot/:id", async (req,res)=>{
+
+try{
+
+const response = await fetch(`https://discord.com/api/guilds/${req.params.id}`,{
+headers:{
+Authorization:`Bot ${BOT_TOKEN}`
+}
+})
+
+if(response.status === 404){
+
+return res.json({
+inServer:false
+})
+
+}
+
+if(!response.ok){
+
+return res.json({
+inServer:false
+})
+
+}
+
+return res.json({
+inServer:true
+})
+
+}catch(err){
+
+console.error(err)
+
+res.json({
+inServer:false
+})
+
+}
+
+})
+
+const startTime = Date.now()
+
+app.get("/api/botstats",(req,res)=>{
+
+const uptime = Date.now() - startTime
+
+const seconds = Math.floor(uptime/1000)
+const minutes = Math.floor(seconds/60)
+const hours = Math.floor(minutes/60)
+
+res.json({
+
+ping: Math.floor(Math.random()*40)+20,
+uptime: hours+"h "+(minutes%60)+"m"
+
+})
+
+})
+
+/* CHANNEL LIST */
+
+app.get("/api/channels/:id", async (req,res)=>{
+
+try{
+
+const response = await fetch(`https://discord.com/api/guilds/${req.params.id}/channels`,{
+headers:{
+Authorization:`Bot ${BOT_TOKEN}`
+}
+})
+
+const channels = await response.json()
+
+const filtered = channels
+.filter(c => c.type === 0 || c.type === 4)
+.map(c => ({
+
+id:c.id,
+name: c.type === 4 ? "📁 "+c.name : "#"+c.name,
+type:c.type
+
+}))
+
+res.json(filtered)
+
+}catch(err){
+
+console.error(err)
+res.json([])
+
+}
+
+})
+
+/* ROLE LIST */
+
+app.get("/api/roles/:id", async (req,res)=>{
+
+try{
+
+const response = await fetch(`https://discord.com/api/guilds/${req.params.id}/roles`,{
+headers:{
+Authorization:`Bot ${BOT_TOKEN}`
+}
+})
+
+const roles = await response.json()
+
+const filtered = roles
+.filter(r => r.name !== "@everyone")
+.map(r => ({
+id:r.id,
+name:r.name
+}))
+
+res.json(filtered)
+
+}catch(err){
+
+console.error(err)
+res.json([])
+
+}
+
+})
+
+/* GET TICKET CONFIG */
+
+app.get("/api/tickets/config/:id",(req,res)=>{
+
+const data = loadTickets()
+
+res.json(data[req.params.id] || {})
+
+})
+
+
+/* SAVE TICKET CONFIG */
+
+app.post("/api/tickets/config/:id",(req,res)=>{
+
+const data = loadTickets()
+
+data[req.params.id] = {
+category:req.body.category,
+role:req.body.role
+}
+
+saveTickets(data)
+
+res.json({success:true})
+
+})
+
+
+
+/* MODULE GET */
+
+app.get("/api/modules/:id",(req,res)=>{
+
+const data = loadModules()
+
+const guildId = req.params.id
+
+if(!data[guildId]){
+
+data[guildId] = {
+moderation:true,
+automod:false,
+tickets:false,
+welcome:false,
+logs:false
+}
+
+saveModules(data)
+
+}
+
+res.json(data[guildId])
+
+})
+
+app.get("/api/activity/:id",(req,res)=>{
+
+const labels = [
+"Mon","Tue","Wed","Thu","Fri","Sat","Sun"
+]
+
+function random(){
+
+return Math.floor(Math.random()*40)+5
+
+}
+
+res.json({
+
+labels,
+
+joins:[
+random(),
+random(),
+random(),
+random(),
+random(),
+random(),
+random()
+],
+
+messages:[
+random(),
+random(),
+random(),
+random(),
+random(),
+random(),
+random()
+],
+
+commands:[
+random(),
+random(),
+random(),
+random(),
+random(),
+random(),
+random()
+]
+
+})
+
+})
+
+
+
+/* MODULE SAVE */
+
+app.post("/api/modules/:id",(req,res)=>{
+
+const data = loadModules()
+
+const guildId = req.params.id
+
+data[guildId] = req.body
+
+saveModules(data)
+
+res.json({success:true})
+
+})
+
+/* TICKET FILE */
+
+const ticketFile = path.join(__dirname, "..", "shared", "tickets.json")
+
+function loadTickets(){
+
+if(!fs.existsSync(ticketFile)){
+fs.writeFileSync(ticketFile,"{}")
+return {}
+}
+
+try{
+return JSON.parse(fs.readFileSync(ticketFile))
+}catch{
+return {}
+}
+
+}
+
+function saveTickets(data){
+
+fs.writeFileSync(ticketFile, JSON.stringify(data,null,2))
+
+}
+
+
+/* SEND TICKET PANEL */
+
+app.post("/api/tickets/send/:id", async (req,res)=>{
+
+const {channel,title,description,button,role} = req.body
+
+try{
+
+await fetch(`https://discord.com/api/channels/${channel}/messages`,{
+
+method:"POST",
+
+headers:{
+Authorization:`Bot ${BOT_TOKEN}`,
+"Content-Type":"application/json"
+},
+
+body:JSON.stringify({
+
+content: role ? `<@&${role}>` : "",
+
+embeds:[{
+
+title:title,
+description:description,
+color:5793266
+
+}],
+
+components:[{
+
+type:1,
+components:[{
+
+type:2,
+label:button,
+style:1,
+custom_id:"ticket_create"
+
+}]
+
+}]
+
+})
+
+})
+
+res.json({success:true})
+
+}catch(err){
+
+console.error(err)
+res.json({success:false})
+
+}
+
+})
+
+
+
+
+
+/* DASHBOARD PAGE */
+
+app.get("/dashboard/:id",(req,res)=>{
+
+res.sendFile(path.join(__dirname,"public/server.html"))
+
+})
+
+
+/* OTHER PAGES */
+
+app.get("/", (req, res) => {
+res.sendFile(path.join(__dirname, "public/dashboard.html"))
+})
+
+app.get("/modules", (req, res) => {
+res.sendFile(path.join(__dirname, "public/modules.html"))
+})
+
+app.get("/commands", (req, res) => {
+res.sendFile(path.join(__dirname, "public/commands.html"))
+})
+
+app.get("/stats", (req, res) => {
+res.sendFile(path.join(__dirname, "public/stats.html"))
+})
+
+app.get("/logs", (req, res) => {
+res.sendFile(path.join(__dirname, "public/logs.html"))
+})
+
+app.get("/settings", (req, res) => {
+res.sendFile(path.join(__dirname, "public/settings.html"))
+})
+
+
+/* MODERATION PAGE */
+
+app.get("/moderation/:id",(req,res)=>{
+res.sendFile(path.join(__dirname,"public","moderation.html"))
+})
+
+/* TICKETS PAGE */
+
+app.get("/tickets/:id",(req,res)=>{
+res.sendFile(path.join(__dirname,"public","tickets.html"))
+})
+
+
+
+/* START SERVER */
+
 app.listen(3000, () => {
-  console.log("Dashboard running → http://localhost:3000");
-});
 
-console.log("BOT TOKEN:", process.env.BOT_TOKEN ? "OK" : "MISSING");
+console.log("Dashboard v2 running on http://localhost:3000")
 
+})
