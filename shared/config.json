@@ -37,17 +37,22 @@
     },
     "ticket": {
       "enabled": true,
-      "categoryId": "1295791565469646899",
+      "categoryId": "1478278853917933620",
       "supportRoleId": "1293611320075358248",
       "logChannelId": "1295791565469646899",
-      "panelChannelId": "",
+      "panelChannelId": "1478278883223801947",
       "maxPerUser": 1,
       "panel": {
         "title": "🎫 Support",
         "description": "Kattints a gombra ticket nyitásához!",
         "color": "#5865F2"
       },
-      "deployRequested": true
+      "deployRequested": false
+    },
+    "moderation": {
+      "logChannel": "",
+      "muteRole": "",
+      "modRole": ""
     }
   }
 }

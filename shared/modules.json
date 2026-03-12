@@ -1,0 +1,16 @@
+{
+  "1063176115046330368": {
+    "moderation": true,
+    "automod": false,
+    "tickets": false,
+    "welcome": false,
+    "logs": false
+  },
+  "SERVERID": {
+    "moderation": true,
+    "automod": false,
+    "tickets": false,
+    "welcome": false,
+    "logs": false
+  }
+}
