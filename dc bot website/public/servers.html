@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+<meta charset="UTF-8">
+<title>Select Server</title>
+
+<link rel="stylesheet" href="/css/style.css">
+
+</head>
+
+<body>
+
+<div class="main">
+
+<h1>Select a Server</h1>
+
+<div id="servers"></div>
+
+</div>
+
+<script>
+
+fetch("/api/servers")
+.then(res => res.json())
+.then(data => {
+
+const container = document.getElementById("servers")
+
+data.forEach(guild => {
+
+const div = document.createElement("div")
+
+div.className = "card"
+
+const icon = guild.icon
+? `https://cdn.discordapp.com/icons/${guild.id}/${guild.icon}.png`
+: "https://cdn.discordapp.com/embed/avatars/0.png"
+
+div.innerHTML = `
+<a href="/dashboard/${guild.id}" class="server-card">
+
+<img class="server-icon" src="${icon}">
+
+<h3>${guild.name}</h3>
+
+</a>
+`
+
+
+
+container.appendChild(div)
+
+})
+
+})
+
+</script>
+
+</body>
+</html>
+

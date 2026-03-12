@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+<meta charset="UTF-8">
+<title>Moderation Settings</title>
+
+<link rel="stylesheet" href="/css/style.css">
+
+</head>
+
+<body>
+
+<div class="sidebar">
+
+<div class="logo">ExcellentBot</div>
+
+<ul>
+
+<li><a href="/servers">← Back</a></li>
+
+<li><a href="/dashboard">Overview</a></li>
+
+<li class="active"><a href="#">Moderation</a></li>
+
+</ul>
+
+</div>
+
+
+<div class="main">
+
+<h1>Moderation Settings</h1>
+
+<div class="card">
+
+<div class="setting">
+
+<label>Log Channel</label>
+
+<select id="logChannel"></select>
+
+</div>
+
+<div class="setting">
+
+<label>Mute Role</label>
+
+<select id="muteRole"></select>
+
+</div>
+
+<div class="setting">
+
+<label>Moderator Role</label>
+
+<select id="modRole"></select>
+
+</div>
+
+
+<div class="save-area">
+
+<button onclick="save()">Save</button>
+
+</div>
+
+</div>
+
+</div>
+
+<script>
+
+const serverId = window.location.pathname.split("/").pop()
+
+
+/* CHANNELS */
+
+fetch(`/api/channels/${serverId}`)
+.then(res=>res.json())
+.then(channels=>{
+
+const select = document.getElementById("logChannel")
+
+channels.forEach(c=>{
+
+const opt = document.createElement("option")
+
+opt.value = c.id
+opt.text = "#"+c.name
+
+select.appendChild(opt)
+
+})
+
+})
+
+
+/* ROLES */
+
+fetch(`/api/roles/${serverId}`)
+.then(res=>res.json())
+.then(roles=>{
+
+const mute = document.getElementById("muteRole")
+const mod = document.getElementById("modRole")
+
+roles.forEach(r=>{
+
+const opt1 = document.createElement("option")
+opt1.value = r.id
+opt1.text = r.name
+
+const opt2 = opt1.cloneNode(true)
+
+mute.appendChild(opt1)
+mod.appendChild(opt2)
+
+})
+
+})
+
+
+/* LOAD SETTINGS */
+
+fetch(`/api/moderation/${serverId}`)
+.then(res=>res.json())
+.then(data=>{
+
+document.getElementById("logChannel").value = data.logChannel
+document.getElementById("muteRole").value = data.muteRole
+document.getElementById("modRole").value = data.modRole
+
+})
+
+
+/* SAVE */
+
+function save(){
+
+const data = {
+
+logChannel:document.getElementById("logChannel").value,
+muteRole:document.getElementById("muteRole").value,
+modRole:document.getElementById("modRole").value
+
+}
+
+fetch(`/api/moderation/${serverId}`,{
+
+method:"POST",
+headers:{
+"Content-Type":"application/json"
+},
+body:JSON.stringify(data)
+
+}).then(()=>{
+
+alert("Saved!")
+
+})
+
+}
+
+</script>
+
+</body>
+</html>

@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+<meta charset="UTF-8">
+<title>Server Dashboard</title>
+
+<link rel="stylesheet" href="/css/style.css">
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+
+</head>
+
+<body>
+
+<div class="sidebar">
+
+<div class="logo">ExcellentBot</div>
+
+<ul>
+
+<li>
+<a href="/servers">← Back</a>
+</li>
+
+<li class="active">
+<a href="#">Overview</a>
+</li>
+
+<li>
+<a id="moderation-link">Moderation</a>
+</li>
+
+<li>
+<a href="#">Automod</a>
+</li>
+
+<li>
+<a id="tickets-link">Tickets</a>
+</li>
+
+<li>
+<a href="#">Welcome</a>
+</li>
+
+<li>
+<a href="#">Logs</a>
+</li>
+
+</ul>
+
+</div>
+
+
+<div class="main">
+
+<div class="server-header">
+
+<img id="server-icon" class="server-icon">
+
+<div class="server-info">
+
+<h1 id="server-name">Loading...</h1>
+
+<div class="server-stats">
+
+<div class="stat">
+<span>Members</span>
+<b id="members">-</b>
+</div>
+
+<div class="stat">
+<span>Channels</span>
+<b id="channels">-</b>
+</div>
+
+<div class="stat">
+<span>Roles</span>
+<b id="roles">-</b>
+</div>
+
+<div class="stat">
+<span>Bot</span>
+<b id="botstatus">Online</b>
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+<h2>Server Activity</h2>
+
+<div class="graph">
+<canvas id="activityChart"></canvas>
+</div>
+
+
+<h2>Modules</h2>
+
+<div class="modules-grid">
+
+<div class="module">
+<span>Moderation</span>
+
+<label class="switch">
+<input type="checkbox" id="moderation">
+<span class="slider"></span>
+</label>
+
+</div>
+
+
+<div class="module">
+<span>Automod</span>
+
+<label class="switch">
+<input type="checkbox" id="automod">
+<span class="slider"></span>
+</label>
+
+</div>
+
+
+<div class="module">
+<span>Tickets</span>
+
+<label class="switch">
+<input type="checkbox" id="tickets">
+<span class="slider"></span>
+</label>
+
+</div>
+
+
+<div class="module">
+<span>Welcome</span>
+
+<label class="switch">
+<input type="checkbox" id="welcome">
+<span class="slider"></span>
+</label>
+
+</div>
+
+
+<div class="module">
+<span>Logs</span>
+
+<label class="switch">
+<input type="checkbox" id="logs">
+<span class="slider"></span>
+</label>
+
+</div>
+
+</div>
+
+</div>
+
+
+<script>
+
+const serverId = window.location.pathname.split("/").pop()
+
+document.getElementById("tickets-link").href = `/tickets/${serverId}`
+
+
+
+/* SERVER INFO */
+
+fetch(`/api/server/${serverId}`)
+.then(res => res.json())
+.then(guild => {
+
+if(!guild) return
+
+const icon = guild.icon
+? `https://cdn.discordapp.com/icons/${guild.id}/${guild.icon}.png`
+: "https://cdn.discordapp.com/embed/avatars/0.png"
+
+document.getElementById("server-icon").src = icon
+document.getElementById("server-name").innerText = guild.name
+
+})
+
+
+/* MODULE LOAD */
+
+fetch(`/api/modules/${serverId}`)
+.then(res => res.json())
+.then(modules => {
+
+document.getElementById("moderation").checked = modules.moderation
+document.getElementById("automod").checked = modules.automod
+document.getElementById("tickets").checked = modules.tickets
+document.getElementById("welcome").checked = modules.welcome
+document.getElementById("logs").checked = modules.logs
+
+document.getElementById("moderation-link").href = `/moderation/${serverId}`
+
+})
+
+
+/* MODULE SAVE */
+
+document.querySelectorAll("input[type=checkbox]").forEach(box=>{
+
+box.addEventListener("change",saveModules)
+
+})
+
+function saveModules(){
+
+const data = {
+
+moderation:document.getElementById("moderation").checked,
+automod:document.getElementById("automod").checked,
+tickets:document.getElementById("tickets").checked,
+welcome:document.getElementById("welcome").checked,
+logs:document.getElementById("logs").checked
+
+}
+
+fetch(`/api/modules/${serverId}`,{
+
+method:"POST",
+headers:{
+"Content-Type":"application/json"
+},
+body:JSON.stringify(data)
+
+})
+
+}
+
+
+/* SERVER STATS */
+
+fetch(`/api/stats/${serverId}`)
+.then(res=>res.json())
+.then(stats=>{
+
+document.getElementById("members").innerText = stats.members
+document.getElementById("channels").innerText = stats.channels
+document.getElementById("roles").innerText = stats.roles
+
+})
+
+
+/* BOT STATUS */
+
+fetch(`/api/bot/${serverId}`)
+.then(res=>res.json())
+.then(data=>{
+
+const status = document.getElementById("botstatus")
+
+if(data.inServer){
+
+status.innerText = "Online"
+status.style.color = "lime"
+
+}else{
+
+status.innerHTML =
+`<a href="https://discord.com/oauth2/authorize?client_id=1079904738625212416&permissions=8&scope=bot%20applications.commands&guild_id=${serverId}" target="_blank">Invite Bot</a>`
+
+}
+
+})
+
+fetch("/api/botstats")
+.then(res=>res.json())
+.then(data=>{
+
+document.getElementById("ping").innerText = data.ping+"ms"
+document.getElementById("uptime").innerText = data.uptime
+
+})
+
+fetch(`/api/activity/${serverId}`)
+.then(res=>res.json())
+.then(data=>{
+
+const ctx = document.getElementById("activityChart")
+
+new Chart(ctx,{
+
+type:"line",
+
+data:{
+labels:data.labels,
+
+datasets:[{
+
+label:"Joins",
+data:data.joins,
+borderWidth:2,
+tension:0.4
+
+},
+{
+
+label:"Messages",
+data:data.messages,
+borderWidth:2,
+tension:0.4
+
+},
+{
+
+label:"Commands",
+data:data.commands,
+borderWidth:2,
+tension:0.4
+
+}]
+
+},
+
+options:{
+responsive:true
+}
+
+})
+
+})
+
+
+</script>
+
+
+</body>
+</html>
