@@ -1,4 +1,4 @@
-const ticketManager = require("../shared/ticketManager");
+const ticketManager = require("../../shared/ticketManager");
 
 module.exports = { 
   name: 'interactionCreate',
@@ -26,7 +26,7 @@ module.exports = {
     // 2) Ticket gombok kezelése (ÚJ rendszer)
     if (interaction.isButton()) {
 
-      if (interaction.customId === "ticket_open") {
+      if (interaction.customId === "ticket_create") {
         return ticketManager.openTicket(interaction);
       }
 
