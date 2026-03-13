@@ -2,7 +2,7 @@
   "1063176115046330368": {
     "moderation": true,
     "automod": false,
-    "tickets": false,
+    "tickets": true,
     "welcome": false,
     "logs": false
   },
