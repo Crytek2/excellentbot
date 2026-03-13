@@ -2,12 +2,9 @@
 <html>
 
 <head>
-
 <meta charset="UTF-8">
 <title>Ticket System</title>
-
 <link rel="stylesheet" href="/css/style.css">
-
 </head>
 
 <body>
@@ -19,61 +16,43 @@
 <ul>
 
 <li><a href="/servers">← Back</a></li>
-
-<li>
-<a id="overview">Overview</a>
-</li>
-
-<li class="active">
-<a>Tickets</a>
-</li>
+<li><a id="overview">Overview</a></li>
+<li class="active"><a>Tickets</a></li>
 
 </ul>
 
 </div>
 
-
 <div class="main">
 
-<h1>Create Ticket Panel</h1>
+<h1>Ticket Panel Builder</h1>
 
 <div class="card ticket-card">
 
 <div class="setting">
-<label>Send Panel To Channel</label>
+<label>Channel</label>
 <select id="channel"></select>
 </div>
-
-
-<div class="setting">
-<label>Ticket Category</label>
-<select id="category"></select>
-</div>
-
-
-<div class="setting">
-<label>Panel Title</label>
-<input id="title" type="text" placeholder="Support Center">
-</div>
-
-
-<div class="setting">
-<label>Description</label>
-<textarea id="desc" placeholder="Click the button below to open a support ticket"></textarea>
-</div>
-
 
 <div class="setting">
 <label>Support Role</label>
 <select id="role"></select>
 </div>
 
+<div class="setting">
+<label>Panel Title</label>
+<input id="title" type="text" value="🎫 Support Center">
+</div>
+
+<div class="setting">
+<label>Description</label>
+<textarea id="desc">Click the button below to open a support ticket</textarea>
+</div>
 
 <div class="setting">
 <label>Button Text</label>
-<input id="button" type="text" placeholder="Open Ticket">
+<input id="button" value="Open Ticket">
 </div>
-
 
 <div class="save-area">
 <button onclick="sendPanel()">Send Ticket Panel</button>
@@ -83,16 +62,11 @@
 
 </div>
 
-
-<div id="toast">Saved</div>
-
-
 <script>
 
 const serverId = window.location.pathname.split("/").pop()
 
 document.getElementById("overview").href = `/dashboard/${serverId}`
-
 
 /* LOAD CHANNELS */
 
@@ -100,8 +74,7 @@ fetch(`/api/channels/${serverId}`)
 .then(res=>res.json())
 .then(channels=>{
 
-const channelSelect = document.getElementById("channel")
-const categorySelect = document.getElementById("category")
+const select = document.getElementById("channel")
 
 channels.forEach(c=>{
 
@@ -109,23 +82,11 @@ const opt = document.createElement("option")
 opt.value = c.id
 opt.text = c.name
 
-// TEXT CHANNEL
-if(c.type === 0){
-channelSelect.appendChild(opt)
-}
-
-// CATEGORY
-if(c.type === 4){
-const opt2 = document.createElement("option")
-opt2.value = c.id
-opt2.text = c.name
-categorySelect.appendChild(opt2)
-}
+select.appendChild(opt)
 
 })
 
 })
-
 
 /* LOAD ROLES */
 
@@ -138,7 +99,6 @@ const select = document.getElementById("role")
 roles.forEach(r=>{
 
 const opt = document.createElement("option")
-
 opt.value = r.id
 opt.text = "@"+r.name
 
@@ -148,6 +108,21 @@ select.appendChild(opt)
 
 })
 
+/* LOAD SAVED CONFIG */
+
+fetch(`/api/tickets/config/${serverId}`)
+.then(res=>res.json())
+.then(data=>{
+
+if(!data) return
+
+document.getElementById("channel").value = data.channel || ""
+document.getElementById("role").value = data.role || ""
+document.getElementById("title").value = data.title || ""
+document.getElementById("desc").value = data.description || ""
+document.getElementById("button").value = data.button || ""
+
+})
 
 /* SEND PANEL */
 
@@ -156,7 +131,6 @@ function sendPanel(){
 const data = {
 
 channel:document.getElementById("channel").value,
-category:document.getElementById("category").value,
 role:document.getElementById("role").value,
 title:document.getElementById("title").value,
 description:document.getElementById("desc").value,
@@ -164,29 +138,10 @@ button:document.getElementById("button").value
 
 }
 
-if(!data.channel){
-showToast("Select a channel")
-return
-}
-
-if(!data.title){
-showToast("Title required")
-return
-}
-
-if(!data.button){
-showToast("Button text required")
-return
-}
-
 fetch(`/api/tickets/send/${serverId}`,{
 
 method:"POST",
-
-headers:{
-"Content-Type":"application/json"
-},
-
+headers:{ "Content-Type":"application/json" },
 body:JSON.stringify(data)
 
 })
@@ -194,21 +149,14 @@ body:JSON.stringify(data)
 .then(result=>{
 
 if(result.success){
-
 showToast("Ticket panel sent!")
-
 }else{
-
 showToast("Error sending panel")
-
 }
 
 })
 
 }
-
-
-/* TOAST */
 
 function showToast(msg){
 
@@ -227,8 +175,11 @@ toast.style.opacity = "0"
 
 </script>
 
-</body>
+<div id="toast">Saved</div>
 
+</body>
 </html>
+
+
 
 
