@@ -5,7 +5,7 @@ const { Client, Collection, GatewayIntentBits, Partials } = require("discord.js"
 const modLog = require("./shared/modLogManager");
 const inviteManager = require("./shared/inviteManager.js");
 const configManager = require("../shared/configManager.js");
-const ticketManager = require("./shared/ticketManager");
+const ticketManager = require("../shared/ticketManager");
 
 
 
